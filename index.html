@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Enhanced premium UI */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #32363e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #assistant-container {
+            width: 350px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            text-align: center;
+        }
+
+        .assistant-image {
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        #start-btn {
+            padding: 12px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+
+        #start-btn:hover {
+            background-color: #0056b3;
+        }
+
+        #output {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 16px;
+            color: #333;
+            min-height: 50px;
+        }
+
+        .mic-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .wave {
+            display: none; /* Initially hidden */
+            width: 20px;
+            height: 20px;
+            margin: 0 5px;
+            border-radius: 50%;
+            animation: wave-animation 0.8s infinite alternate;
+        }
+
+        /* Different colors for the waves */
+        .wave1 { background-color: #007bff; }
+        .wave2 { background-color: #28a745; }
+        .wave3 { background-color: #ffc107; }
+        .wave4 { background-color: #dc3545; }
+        .wave5 { background-color: #17a2b8; }
+
+        @keyframes wave-animation {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.5);
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+
+    <div id="assistant-container">
+        <img src="https://cdn.pixabay.com/photo/2024/03/15/19/51/ai-generated-8635685_1280.png" alt="AI Assistant" class="assistant-image">
+        <h1>Virtual Assistant</h1>
+        <button id="start-btn"><i class="fa-solid fa-microphone"></i> Speak Now</button>
+        <div id="output">Results will appear here...</div>
+        <div class="mic-container" id="mic-wave-container">
+            <div class="wave wave1"></div>
+            <div class="wave wave2"></div>
+            <div class="wave wave3"></div>
+            <div class="wave wave4"></div>
+            <div class="wave wave5"></div>
+        </div>
+    </div>
+
+    <script>
+        const startBtn = document.getElementById('start-btn');
+        const outputDiv = document.getElementById('output');
+        const micWaveContainer = document.getElementById('mic-wave-container');
+        const waves = micWaveContainer.getElementsByClassName('wave');
+
+        // Initialize Speech Recognition API
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'en-US';  // Set the language to English US
+        recognition.interimResults = false;
+
+        // Speech to Text result
+        recognition.onresult = (event) => {
+            const spokenWords = event.results[0][0].transcript.toLowerCase();
+            outputDiv.innerText = `You said: "${spokenWords}"`;
+            // Stop showing the waves when recognition is done
+            micWaveContainer.style.display = 'none';
+
+            // Process the command
+            processCommand(spokenWords);
+        };
+
+        // Start recognition on button click
+        startBtn.addEventListener('click', () => {
+            micWaveContainer.style.display = 'flex'; // Show wave animation
+            for (let wave of waves) {
+                wave.style.display = 'block'; // Show wave dots
+            }
+            recognition.start();
+        });
+
+        // Error handling for speech recognition
+        recognition.onerror = (event) => {
+            outputDiv.innerText = `Error occurred in recognition: ${event.error}`;
+            micWaveContainer.style.display = 'none'; // Hide wave animation on error
+        };
+
+        // Command Processing Function
+        function processCommand(spokenWords) {
+            // Define a mapping of actions to URLs
+            const actionMapping = {
+                'youtube': 'https://www.youtube.com',
+                'instagram': 'https://www.instagram.com',
+                'amazon': 'https://www.amazon.in',
+                'google': 'https://google.com',
+                'chatgpt': 'https://chatgpt.com',
+                'github' : 'https://github.com',
+                'linkedin': 'https://www.linkedin.com/feed',
+                'leetcode': 'https://leetcode.com',
+                'gfg': 'https://www.geeksforgeeks.org',
+                'codechef': 'https://www.codechef.com/dashboard',
+                'facebook': 'https://www.facebook.com',
+            };
+
+            // Convert spoken words to lowercase for case-insensitive matching
+            const lowerSpokenWords = spokenWords.toLowerCase();
+
+            // Check if the command includes "open" followed by an action
+            const actionMatch = lowerSpokenWords.match(/open (\w+)/);
+            if (actionMatch) {
+                const action = actionMatch[1]; // Get the action part
+                const url = actionMapping[action]; // Find the corresponding URL
+
+                if (url) {
+                    outputDiv.innerText = `Opening ${action.charAt(0).toUpperCase() + action.slice(1)}...`;
+                    speakMessage(`Opening ${action.charAt(0).toUpperCase() + action.slice(1)}`);
+                    window.open(url, '_blank');
+                    return; // Exit after handling the command
+                }
+            }
+
+            // Handle specific cases like "what is cpu"
+            if (lowerSpokenWords.includes('what is cpu')) {
+                outputDiv.innerText = "Searching for CPU information...";
+                speakMessage("Here is the result for 'What is CPU'.");
+                window.open('https://www.google.com/search?q=what+is+cpu', '_blank');
+                return;
+            }
+
+            // Handle "hey luma, how are you?"
+            if (lowerSpokenWords.includes('hey luma') && lowerSpokenWords.includes('who are you')) {
+                const response = `I'm Zira, your virtual assistant. I was created by Arvind Sir, to help you with various tasks.`;
+                outputDiv.innerText = response;
+                speakMessage(response);
+                return;
+            }
+
+            // Handle generic search queries
+            if (lowerSpokenWords.includes('hey luma')) {
+                // Use a regex to capture everything after "hey luma" and trim whitespace and commas
+                const searchQuery = lowerSpokenWords.replace(/hey luma/i, '').trim().replace(/^,+\s*|\s*,+$/g, '');
+                outputDiv.innerText = `Searching for ${searchQuery}...`;
+                speakMessage(`Here is the result for ${searchQuery}`);
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`, '_blank');
+                return;
+            }
+
+            // If no commands matched
+            outputDiv.innerText = "Sorry, I didn't understand that command.";
+            speakMessage("Sorry, I didn't understand that command.");
+        };
+
+        // Text-to-Speech (TTS)
+        function speakMessage(message) {
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.lang = 'en-US';
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // For unsupported browsers
+        if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+            outputDiv.innerText = 'Sorry, your browser does not support speech recognition.';
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+<!-- process of working this asist
+hey luma, -------open siteName-------
+hey luma, --------your question------
+hey luma, ------who are you--------- -->
